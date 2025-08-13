@@ -3,7 +3,7 @@
 
 /**
  Custom library for actions in Netology C++ course.
- Version - 1.0.12
+ Version - 1.0.13
  This library could be a module, but no...
 */
 
@@ -33,7 +33,7 @@ namespace libio {
      * @param separator
      */
     template<typename T>
-    void print(T str, string separator = "") {
+    void print(T str, std::string separator = "") {
         if (cout.good()) {
             std::cout << str << separator;
         }
@@ -63,7 +63,7 @@ namespace libio {
      * Writes down string into variable by address
      * @param variableAddress
      */
-    inline void stringUserInput(string &variableAddress) {
+    inline void stringUserInput(std::string &variableAddress) {
         if (std::cin.good()) {
             std::cin >> variableAddress;
         }
