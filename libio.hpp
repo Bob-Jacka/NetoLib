@@ -13,7 +13,6 @@
  * Unified namespace for libio.
  */
 namespace libio {
-
     using cint [[maybe_unused]] = const int; //constant custom integer type
 
     /**
@@ -34,7 +33,7 @@ namespace libio {
      */
     template<typename T>
     void print(T str, std::string separator = "") {
-        if (cout.good()) {
+        if (std::cout.good()) {
             std::cout << str << separator;
         }
     }
@@ -111,7 +110,7 @@ namespace libio {
      * @param separator
      */
     template<typename T>
-    void dynamicArrayOutput(T *array, const int size, const bool reverse = false, const string &separator = " ") {
+    void dynamicArrayOutput(T *array, const int size, const bool reverse = false, const std::string &separator = " ") {
         if (reverse) {
             for (int i = size - 1; i >= 0; --i) {
                 std::cout << array[i] << separator;
@@ -121,7 +120,7 @@ namespace libio {
                 std::cout << array[i] << separator;
             }
         }
-        std::cout << endl;
+        std::cout << std::endl;
     }
 
     /**
@@ -153,3 +152,5 @@ namespace libio {
         return dyn_array;
     }
 }
+
+#endif
