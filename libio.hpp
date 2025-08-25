@@ -25,7 +25,8 @@ namespace libio {
     namespace output {
         /**
          * Print given generic message in console with new line. By default, equal to "".
-         * @param str
+         * @warning If using C++23 - use std::println.
+         * @param str string to output
          */
         inline void println(const std::string &str = "") {
             if (std::cout.good()) {
@@ -34,9 +35,10 @@ namespace libio {
         }
 
         /**
-         * Print given generic message in console without new line
+         * Print given generic message in console without new line.
+         * @warning If using C++23 - use std::print.
          * @tparam T generic type
-         * @param str
+         * @param str string to output
          * @param separator
          */
         template<typename T>
@@ -95,9 +97,9 @@ namespace libio {
      */
     namespace input {
         /**
-     * Writes down int value into variable by address
-     * @param variableAddress
-     */
+         * Writes down int value into variable by address
+         * @param variableAddress address of variable to output data to it.
+         */
         inline void intUserInput(int &variableAddress) {
             if (std::cin.good()) {
                 std::cin >> variableAddress;
@@ -106,7 +108,7 @@ namespace libio {
 
         /**
          * Writes down long value into variable by address
-         * @param variableAddress
+         * @param variableAddress address of variable to output data to it.
          */
         inline void longUserInput(long &variableAddress) {
             if (std::cin.good()) {
@@ -116,7 +118,7 @@ namespace libio {
 
         /**
          * Writes down string into variable by address
-         * @param variableAddress
+         * @param variableAddress address of variable to output data to it.
          */
         inline void stringUserInput(std::string &variableAddress) {
             if (std::cin.good()) {
@@ -125,9 +127,9 @@ namespace libio {
         }
 
         /**
-         * Writes down value into variable by address
-         * @tparam T generic type
-         * @param variableAddress
+         * Writes down value into variable by address.
+         * @tparam T generic type.
+         * @param variableAddress address of variable to output data to it.
          */
         template<typename T>
         void userInput(T &variableAddress) {
@@ -142,11 +144,11 @@ namespace libio {
      */
     namespace array {
         /**
-     * Delete dynamically allocated array
-     * @tparam T generic type.
-     * @param array array of generic type.
-     * @param rows rows count in this array.
-     */
+         * Delete dynamically allocated array
+         * @tparam T generic type.
+         * @param array array of generic type.
+         * @param rows rows count in this array.
+         */
         template<typename T>
         void deleteDynamicArray(T *array, const int rows) {
             for (int i = 0; i < rows; ++i) {
@@ -172,7 +174,8 @@ namespace libio {
     }
 
     /**
-     * Contains file actions
+     * Contains file actions.
+     * Ex. write or create.
      */
     namespace file {
         /**
@@ -208,8 +211,8 @@ namespace libio {
 
         /**
          * Write file line by line.
-         * @param fileName
-         * @param lines
+         * @param fileName name of the file to write into.
+         * @param lines vector value of lines of text.
          * @return output file handler.
          */
         inline std::ofstream writeFile(const std::string &fileName, const std::vector<std::string> &lines) {
@@ -225,10 +228,10 @@ namespace libio {
          * @tparam T generic type.
          * @param fileName name of the file.
          * @param count how many lines to get.
-         * @return vector with string values
+         * @return vector with string values.
          */
         template<typename T>
-        std::vector<T> get_few_lines_from(const std::string &fileName, const int count) {
+        std::vector<T> getFewLinesFrom(const std::string &fileName, const int count) {
             std::ifstream file(fileName);
             auto lines = std::vector<T>();
             int inner_counter = 0;
@@ -248,7 +251,7 @@ namespace libio {
          * @deprecated because crashes program.
          * @return string value of current path
          */
-        inline std::string get_cwd() {
+        inline std::string getCwd() {
             const std::filesystem::path currentPath = std::filesystem::current_path();
             return currentPath.string();
         }
