@@ -157,6 +157,15 @@ namespace libio {
             delete[] array;
         }
 
+        template<typename T>
+        T *create1DArray(const int rows) {
+            const auto dyn_array = new T[rows];
+            for (int i = 0; i < rows; ++i) {
+                dyn_array[i] = 0;
+            }
+            return dyn_array;
+        }
+
         /**
          * Inline function for creating 2d int array
          * @param rows rows of the array
@@ -166,7 +175,7 @@ namespace libio {
         template<typename T>
         T **create2DArray(const int rows, const int cols) {
             const auto dyn_array = new T *[rows];
-            for (int i = 0; i < rows; i++) {
+            for (int i = 0; i < rows; ++i) {
                 dyn_array[i] = new int[cols];
             }
             return dyn_array;
