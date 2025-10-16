@@ -90,6 +90,42 @@ namespace libio {
             }
             std::cout << std::endl;
         }
+
+        /**
+        * Print pyramid object one line by line
+        * @param array
+        * @param n
+        */
+       inline void print_pyramid(const int *array, const int n) {
+           for (int i = 0; i < n; ++i) {
+               const int level = (i == 0) ? 0 : static_cast<int>(std::floor(std::log2(static_cast<double>(i + 1))));
+       
+               if (i == 0) {
+                   std::cout << level << " root " << array[i] << '\n';
+               } else {
+                   const int p = (i - 1) / 2;
+                   const char *side = (i == 2 * p + 1) ? "left" : "right";
+                   std::cout << level << " " << side << " (" << array[p] << ") " << array[i] << '\n';
+               }
+           }
+       }
+       
+       /**
+        *
+        * @param array pyramid object in array
+        * @param i
+        */
+       inline void print_one_element(const int *array, const int i) {
+           const int level = (i == 0) ? 0 : static_cast<int>(std::floor(std::log2(static_cast<double>(i + 1))));
+       
+           if (i == 0) {
+               std::cout << level << " root " << array[i] << '\n';
+           } else {
+               const int p = (i - 1) / 2;
+               const char *side = (i == 2 * p + 1) ? "left" : "right";
+               std::cout << level << " " << side << " (" << array[p] << ") " << array[i] << '\n';
+           }
+       }
     }
 
     /**
