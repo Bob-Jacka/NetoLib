@@ -1,22 +1,26 @@
-#ifndef LIBIO_HPP
-#define LIBIO_HPP
+module;
 
 /**
  Custom library for actions in Netology C++ course.
- Version - 1.1.0
- This library could be a module, but no...
+ Version - 1.2.0
+ This library could be a module, but yes, rewritten to module with experimental functions
 */
 
 #include <fstream>
 #include <iostream>
 #include <vector>
+
+#ifdef EXPERIMENTAL //define functions and include other libraries if experimental tag is defined
 #include <filesystem>
-#include <algorithm>
+#include <cmath>
+#endif
+
+export module Libio;
 
 /**
  * Unified namespace for libio.
  */
-namespace libio {
+export namespace libio {
     using cint [[maybe_unused]] = const int; //constant custom integer type
 
     /**
@@ -27,8 +31,10 @@ namespace libio {
          * Print given generic message in console with new line. By default, equal to "".
          * @warning If using C++23 - use std::println.
          * @param str string to output
+         * @tparam T generic parameter of type to console print
          */
-        inline void println(const std::string &str = "") {
+        template<typename T = std::string>
+        void println(const T &str = "\n") {
             if (std::cout.good()) {
                 std::cout << str << std::endl;
             }
@@ -39,10 +45,10 @@ namespace libio {
          * @warning If using C++23 - use std::print.
          * @tparam T generic type
          * @param str string to output
-         * @param separator
+         * @param separator text separator
          */
         template<typename T>
-        void print(T str, std::string separator = "") {
+        void print(const T &str, std::string separator = "") {
             if (std::cout.good()) {
                 std::cout << str << separator;
             }
@@ -59,7 +65,7 @@ namespace libio {
         template<typename T>
         void lineArrayOutput(const T *array, const int array_size, const std::string &separator = " ",
                              const bool is_inline = false) {
-            for (int i = 0; i < array_size - 1; i++) {
+            for (int i = 0; i < array_size - 1; ++i) {
                 std::cout << array[i] << separator;
             }
             std::cout << array[array_size - 1];
@@ -91,41 +97,44 @@ namespace libio {
             std::cout << std::endl;
         }
 
+#ifdef EXPERIMENTAL
         /**
         * Print pyramid object one line by line
         * @param array
         * @param n
         */
-       inline void print_pyramid(const int *array, const int n) {
-           for (int i = 0; i < n; ++i) {
-               const int level = (i == 0) ? 0 : static_cast<int>(std::floor(std::log2(static_cast<double>(i + 1))));
-       
-               if (i == 0) {
-                   std::cout << level << " root " << array[i] << '\n';
-               } else {
-                   const int p = (i - 1) / 2;
-                   const char *side = (i == 2 * p + 1) ? "left" : "right";
-                   std::cout << level << " " << side << " (" << array[p] << ") " << array[i] << '\n';
-               }
-           }
-       }
-       
-       /**
-        *
-        * @param array pyramid object in array
-        * @param i
-        */
-       inline void print_one_element(const int *array, const int i) {
-           const int level = (i == 0) ? 0 : static_cast<int>(std::floor(std::log2(static_cast<double>(i + 1))));
-       
-           if (i == 0) {
-               std::cout << level << " root " << array[i] << '\n';
-           } else {
-               const int p = (i - 1) / 2;
-               const char *side = (i == 2 * p + 1) ? "left" : "right";
-               std::cout << level << " " << side << " (" << array[p] << ") " << array[i] << '\n';
-           }
-       }
+        export void print_pyramid(const int *array, const int n) {
+            for (int i = 0; i < n; ++i) {
+                const int level = (i == 0) ? 0 : static_cast<int>(std::floor(std::log2(static_cast<double>(i + 1))));
+
+                if (i == 0) {
+                    std::cout << level << " root " << array[i] << '\n';
+                } else {
+                    const int p = (i - 1) / 2;
+                    const char *side = (i == 2 * p + 1) ? "left" : "right";
+                    std::cout << level << " " << side << " (" << array[p] << ") " << array[i] << '\n';
+                }
+            }
+        }
+
+        /**
+         *
+         * @param array pyramid object in array
+         * @param i
+         */
+        export void print_one_element(const int *array, const int i) {
+            const int level = (i == 0) ? 0 : static_cast<int>(std::floor(std::log2(static_cast<double>(i + 1))));
+
+            if (i == 0) {
+                std::cout << level << " root " << array[i] << '\n';
+            } else {
+                const int p = (i - 1) / 2;
+                const char *side = (i == 2 * p + 1) ? "left" : "right";
+                std::cout << level << " " << side << " (" << array[p] << ") " << array[i] << '\n';
+            }
+        }
+
+#endif
     }
 
     /**
@@ -193,6 +202,12 @@ namespace libio {
             delete[] array;
         }
 
+        /**
+         * Create one dimensional array of generic type
+         * @tparam T type for values in array
+         * @param rows rows count
+         * @return constructed array of generic type
+         */
         template<typename T>
         T *create1DArray(const int rows) {
             const auto dyn_array = new T[rows];
@@ -248,10 +263,9 @@ namespace libio {
                 }
                 file.close();
                 return lines;
-            } else {
-                std::cerr << "Error reading file " << fileName << std::endl;
-                return {};
             }
+            std::cerr << "Error reading file " << fileName << std::endl;
+            return {};
         }
 
         /**
@@ -291,16 +305,17 @@ namespace libio {
             return lines;
         }
 
+#ifdef EXPERIMENTAL
         /**
          * Platform independent filepath getter.
-         * @deprecated because crashes program.
+         * @deprecated because crashes program due to strange path get.
          * @return string value of current path
          */
         inline std::string getCwd() {
-            const std::filesystem::path currentPath = std::filesystem::current_path();
-            return currentPath.string();
+                const std::filesystem::path currentPath = std::filesystem::current_path();
+                return currentPath.string();
         }
-    }
-}
 
 #endif
+    }
+}
