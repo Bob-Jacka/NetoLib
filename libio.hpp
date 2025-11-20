@@ -2,13 +2,18 @@ module;
 
 /**
  Custom library for actions in Netology C++ course.
- Version - 1.2.0
- This library could be a module, but yes, rewritten to module with experimental functions
+ Version - 1.14.0
+ This library could be a module, but yes, later rewritten to module with experimental functions.
+ Some kind of Boost library for poor people.
 */
 
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <vector>
+#include <sstream>
+
+// #define EXPERIMENTAL //uncomment this line to turn on experimental library features
 
 #ifdef EXPERIMENTAL //define functions and include other libraries if experimental tag is defined
 #include <filesystem>
@@ -47,7 +52,7 @@ export namespace libio {
          * @param str string to output
          * @param separator text separator
          */
-        template<typename T>
+        template<typename T = std::string>
         void print(const T &str, std::string separator = "") {
             if (std::cout.good()) {
                 std::cout << str << separator;
@@ -73,6 +78,24 @@ export namespace libio {
             if (!is_inline) {
                 std::cout << std::endl;
             }
+        }
+
+        /**
+         * Output container from STL into console
+         * @tparam T generic type
+         * @param array standard container
+         * @param separator separator string
+         * @param endsymbol symbol at the end of output sequence
+         */
+        template<typename T>
+            requires std::copyable<T>
+        void lineArrayOutput(T array, const std::string &separator = " ", const std::string &endsymbol = "") {
+            const size_t array_size = array.size();
+            int i = 0;
+            for (; i < array_size - 1; ++i) {
+                std::cout << array[i] << separator;
+            }
+            std::cout << array[i] << endsymbol;
         }
 
         /**
@@ -135,6 +158,21 @@ export namespace libio {
         }
 
 #endif
+    }
+
+    /**
+     * Namespace for string actions in libio
+     */
+    namespace string {
+        std::vector<std::string> split(std::string const &input) {
+            std::stringstream ss(input);
+            std::vector<std::string> result;
+            std::string word;
+            while (ss >> word) {
+                result.push_back(word);
+            }
+            return result;
+        }
     }
 
     /**
@@ -218,19 +256,51 @@ export namespace libio {
         }
 
         /**
-         * Inline function for creating 2d int array
+         * Inline function for creating 2d generic array
          * @param rows rows of the array
-         * @param cols columns of the array`
-         * @return: initialized 2d int array
+         * @param cols columns of the array
+         * @tparam T generic param for type of the objects in array
+         * @return: initialized 2d generic array
          */
         template<typename T>
         T **create2DArray(const int rows, const int cols) {
             const auto dyn_array = new T *[rows];
             for (int i = 0; i < rows; ++i) {
-                dyn_array[i] = new int[cols];
+                dyn_array[i] = new T *[cols];
             }
             return dyn_array;
         }
+
+#ifdef EXPERIMENTAL
+        /**
+         * Inline function for creating Nd (arrays upper more than 2) generic array
+         * @param rows rows of the array
+         * @param cols columns of the array`
+         * @return: initialized Nd generic array
+         */
+        template<typename T>
+        T **createNDArray(const int rows, const int cols) {
+            const auto dyn_array = new T *[rows];
+            for (int i = 0; i < rows; ++i) {
+                dyn_array[i] = new T *[cols];
+            }
+            return dyn_array;
+        }
+
+        std::tuple<int *, int, int> increase_dynamic_array(int *arr, int logical_size, int actual_size) {
+            if (arr != nullptr) {
+                actual_size *= 2;
+                auto new_arr = new int[actual_size];
+                for (int i = 0; i < logical_size; ++i) {
+                    new_arr[i] = arr[i];
+                }
+                delete[] arr;
+                return {new_arr, logical_size, actual_size};
+            }
+            std::cerr << "Ошибка! Невозможно выделить дополнительную память для массива" << "\n";
+            throw;
+        }
+#endif
     }
 
     /**
@@ -255,8 +325,7 @@ export namespace libio {
          */
         inline std::vector<std::string> readFile(const std::string &fileName) {
             auto lines = std::vector<std::string>();
-            std::ifstream file(fileName);
-            if (file.is_open()) {
+            if (std::ifstream file(fileName); file.is_open()) {
                 std::string line;
                 while (std::getline(file, line)) {
                     lines.emplace_back(line);
@@ -296,7 +365,7 @@ export namespace libio {
             int inner_counter = 0;
             std::string line;
             while (std::getline(file, line)) {
-                inner_counter++;
+                ++inner_counter;
                 if (inner_counter == count) {
                     break;
                 }
