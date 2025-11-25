@@ -2,7 +2,7 @@ module;
 
 /**
  Custom library for actions in Netology C++ course.
- Version - 1.14.0
+ Version - 1.15.0
  This library could be a module, but yes, later rewritten to module with experimental functions.
  Some kind of Boost library for poor people.
 */
@@ -52,7 +52,7 @@ export namespace libio {
          * @param str string to output
          * @param separator text separator
          */
-        template<typename T = std::string>
+        template<typename T>
         void print(const T &str, std::string separator = "") {
             if (std::cout.good()) {
                 std::cout << str << separator;
@@ -116,6 +116,28 @@ export namespace libio {
                 for (int i = 0; i < size; ++i) {
                     std::cout << array[i] << separator;
                 }
+            }
+            std::cout << std::endl;
+        }
+
+        /**
+         * Weird construction for correct output separator.
+         * @tparam T generic type
+         * @param container container object to print out
+         * @param separator separator value between values
+         */
+        template<typename T>
+            requires std::copyable<T>
+        void print_container(const T &container, const std::string &separator = " ") {
+            const size_t container_size = container.size();
+            int i = 0;
+            for (const auto &elem: container) {
+                if (i < container_size - 1) {
+                    std::cout << elem << separator;
+                } else {
+                    std::cout << elem;
+                }
+                ++i;
             }
             std::cout << std::endl;
         }
@@ -220,6 +242,24 @@ export namespace libio {
                 std::cin >> variableAddress;
             }
         }
+
+        /**
+         * @param input_symbol symbol that appear in start of inputting
+         * @return user string
+         */
+        std::string lineInput(const std::string &input_symbol) {
+            std::string line;
+            std::cout << input_symbol;
+            std::getline(std::cin, line);
+            return line;
+        }
+
+#ifdef EXPERIMENTAL
+        template<typename T>
+        std::vector<T> vectorInput() {
+            //
+        }
+#endif
     }
 
     /**
@@ -351,6 +391,7 @@ export namespace libio {
             return out;
         }
 
+#ifdef EXPERIMENTAL
         /**
          * Function for receiving few lines from file.
          * @tparam T generic type.
@@ -373,6 +414,7 @@ export namespace libio {
             }
             return lines;
         }
+#endif
 
 #ifdef EXPERIMENTAL
         /**
