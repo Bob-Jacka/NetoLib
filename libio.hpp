@@ -2,7 +2,7 @@ module;
 
 /**
  Custom library for actions in Netology C++ course.
- Version - 1.15.0
+ Version - 1.16.0
  This library could be a module, but yes, later rewritten to module with experimental functions.
  Some kind of Boost library for poor people.
 */
@@ -10,6 +10,7 @@ module;
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <regex>
 #include <vector>
 #include <sstream>
 
@@ -186,6 +187,11 @@ export namespace libio {
      * Namespace for string actions in libio
      */
     namespace string {
+        /**
+         * Split string without separator
+         * @param input input string to split
+         * @return vector object with strings
+         */
         std::vector<std::string> split(std::string const &input) {
             std::stringstream ss(input);
             std::vector<std::string> result;
@@ -194,6 +200,54 @@ export namespace libio {
                 result.push_back(word);
             }
             return result;
+        }
+
+        /**
+        * Split string into vector object and return changed string.
+        * @param s source string to split.
+        * @param delim delimiter to split on.
+        * @return vector if you want to assign to variable.
+        */
+        std::vector<std::string> split(const std::string &s, const std::string &delim = " ") {
+            std::vector<std::string> result;
+            const std::regex del(delim);
+            std::sregex_token_iterator it(s.begin(),
+                                          s.end(), del, -1);
+            const std::sregex_token_iterator end;
+            while (it != end) {
+                result.push_back(*it);
+                ++it;
+            }
+            return result;
+        }
+
+        /**
+         * Delete whitespaces at begin and end of the given string.
+         * @param s source string.
+         * @return string object without whitespaces.
+         */
+        std::string delete_whitespaces(std::string &s) {
+            int i = 0, first = 0, last = 0;
+            const int n = static_cast<int>(s.size());
+            while (s[i]) {
+                if (s[i] != '.') {
+                    first = i;
+                    break;
+                }
+                ++i;
+            }
+
+            i = n - 1;
+            while (i != -1) {
+                if (s[i] != '.') {
+                    last = i;
+                    break;
+                }
+                --i;
+            }
+
+            s = s.substr(first, last - first + 1);
+            return s;
         }
     }
 
