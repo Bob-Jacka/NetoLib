@@ -2,8 +2,8 @@ module;
 
 /**
  Custom library for actions in Netology C++ course.
- Version - 1.16.0
- This library could be a module, but yes, later rewritten to module with experimental functions.
+ Version - 1.17.0
+ This library could be a module, but yes, later rewritten to module with LIBIO_EXPERIMENTAL functions.
  Some kind of Boost library for poor people.
 */
 
@@ -14,9 +14,9 @@ module;
 #include <vector>
 #include <sstream>
 
-// #define EXPERIMENTAL //uncomment this line to turn on experimental library features
+// #define LIBIO_EXPERIMENTAL //uncomment this line to turn on LIBIO_EXPERIMENTAL library features
 
-#ifdef EXPERIMENTAL //define functions and include other libraries if experimental tag is defined
+#ifdef LIBIO_EXPERIMENTAL //define functions and include other libraries if LIBIO_EXPERIMENTAL tag is defined
 #include <filesystem>
 #include <cmath>
 #endif
@@ -28,6 +28,19 @@ export module Libio;
  */
 export namespace libio {
     using cint [[maybe_unused]] = const int; //constant custom integer type
+
+    /**
+     * Namespace for constrains of types using concepts
+     */
+    namespace type_constrains {
+        template<typename T>
+        concept is_string = std::is_same_v<T, std::string>;
+
+#ifdef LIBIO_EXPERIMENTAL
+        template<typename T>
+        concept is_digit = std::is_same_v<T, int>;
+#endif
+    }
 
     /**
      * Contains different output logic
@@ -54,7 +67,7 @@ export namespace libio {
          * @param separator text separator
          */
         template<typename T>
-        void print(const T &str, std::string separator = "") {
+        void print(const T &str = "", std::string separator = "") {
             if (std::cout.good()) {
                 std::cout << str << separator;
             }
@@ -89,7 +102,7 @@ export namespace libio {
          * @param endsymbol symbol at the end of output sequence
          */
         template<typename T>
-            requires std::copyable<T>
+        requires std::copyable<T>
         void lineArrayOutput(T array, const std::string &separator = " ", const std::string &endsymbol = "") {
             const size_t array_size = array.size();
             int i = 0;
@@ -108,7 +121,8 @@ export namespace libio {
          * @param separator separator value between elements
          */
         template<typename T>
-        void dynamicArrayOutput(const T *array, const int size, const bool reverse = false, const std::string &separator = " ") {
+        void dynamicArrayOutput(const T *array, const int size, const bool reverse = false,
+                                const std::string &separator = " ") {
             if (reverse) {
                 for (int i = size - 1; i >= 0; --i) {
                     std::cout << array[i] << separator;
@@ -128,7 +142,7 @@ export namespace libio {
          * @param separator separator value between values
          */
         template<typename T>
-            requires std::copyable<T>
+        requires std::copyable<T>
         void print_container(const T &container, const std::string &separator = " ") {
             const size_t container_size = container.size();
             int i = 0;
@@ -143,7 +157,19 @@ export namespace libio {
             std::cout << std::endl;
         }
 
-#ifdef EXPERIMENTAL
+#ifdef LIBIO_EXPERIMENTAL
+        template<>
+        void print_container<std::map>(const auto &container, const std::string &separator = " ") {
+            for (const auto& section : container) {
+                std::cout << "[" << section.first << "]" << std::endl;
+                for (const auto& kv : section.second) {
+                    std::cout << "  " << kv.first << "=" << kv.second << std::endl;
+                }
+
+                std::cout << std::endl;
+            }
+        }
+
         /**
         * Print pyramid object one line by line
         * @param array
@@ -188,16 +214,17 @@ export namespace libio {
      */
     namespace string {
         /**
-         * Split string without separator
+         * Split string with char separator, in case of not supported strings in regex
          * @param input input string to split
+         * @param delim delimeter character
          * @return vector object with strings
          */
-        std::vector<std::string> split(std::string const &input) {
-            std::stringstream ss(input);
+        std::vector<std::string> split(std::string const &input, char delim) {
             std::vector<std::string> result;
-            std::string word;
-            while (ss >> word) {
-                result.push_back(word);
+            std::stringstream ss(input);
+            std::string token;
+            while (std::getline(ss, token, delim)) {
+                result.push_back(token);
             }
             return result;
         }
@@ -249,6 +276,52 @@ export namespace libio {
             s = s.substr(first, last - first + 1);
             return s;
         }
+
+        /**
+         * Check for intapibility of input string object
+         * @param input source string
+         * @return bool value
+         */
+        bool is_digit(const std::string &input) {
+            std::regex e("^-?\\d+");
+            if (std::regex_match(input, e)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Another unuseful function for string actions
+         * @param str source string to trim
+         * @return trimmed string
+         */
+        std::string trim(const std::string &str) {
+            size_t first = str.find_first_not_of(" \t\n\r\f\v");
+            if (first == std::string::npos) {
+                return "";
+            }
+            size_t last = str.find_last_not_of(" \t\n\r\f\v");
+            return str.substr(first, last - first + 1);
+        }
+
+        template<typename T>
+        T convert_to_t(const std::string &source);
+
+        template<>
+        int convert_to_t<int>(const std::string &source) {
+            try {
+                return std::stoi(source);
+            } catch (const std::exception &e) {
+                throw std::runtime_error("Cannot convert string to '" + source + "' in int");
+            }
+        }
+
+        template<>
+        std::string convert_to_t<std::string>(const std::string &source) {
+            return source.empty() ? "0" : source;
+        }
+
     }
 
     /**
@@ -308,7 +381,7 @@ export namespace libio {
             return line;
         }
 
-#ifdef EXPERIMENTAL
+#ifdef LIBIO_EXPERIMENTAL
         template<typename T>
         std::vector<T> vectorInput() {
             //
@@ -365,7 +438,7 @@ export namespace libio {
             return dyn_array;
         }
 
-#ifdef EXPERIMENTAL
+#ifdef LIBIO_EXPERIMENTAL
         /**
          * Inline function for creating Nd (arrays upper more than 2) generic array
          * @param rows rows of the array
@@ -413,8 +486,9 @@ export namespace libio {
         }
 
         /**
-         * Read file line by line.
+         * Read file line by line and return lines of file.
          * @param fileName name of the file.
+         * @throw throw exception when error in reading file.
          * @return vector with lines.
          */
         inline std::vector<std::string> readFile(const std::string &fileName) {
@@ -445,7 +519,7 @@ export namespace libio {
             return out;
         }
 
-#ifdef EXPERIMENTAL
+#ifdef LIBIO_EXPERIMENTAL
         /**
          * Function for receiving few lines from file.
          * @tparam T generic type.
@@ -470,7 +544,7 @@ export namespace libio {
         }
 #endif
 
-#ifdef EXPERIMENTAL
+#ifdef LIBIO_EXPERIMENTAL
         /**
          * Platform independent filepath getter.
          * @deprecated because crashes program due to strange path get.
@@ -480,7 +554,6 @@ export namespace libio {
                 const std::filesystem::path currentPath = std::filesystem::current_path();
                 return currentPath.string();
         }
-
 #endif
     }
 }
