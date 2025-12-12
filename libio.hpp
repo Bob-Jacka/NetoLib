@@ -1,45 +1,58 @@
 module;
 
 /**
- Custom library for actions in Netology C++ course.
- Version - 1.17.0
+ Custom library for actions in Netology C++ course and later for more serious projects.
+ Version - 1.18.0
  This library could be a module, but yes, later rewritten to module with LIBIO_EXPERIMENTAL functions.
  Some kind of Boost library for poor people.
 */
 
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <regex>
-#include <vector>
-#include <sstream>
 
-// #define LIBIO_EXPERIMENTAL //uncomment this line to turn on LIBIO_EXPERIMENTAL library features
+// #define LIBIO_EXPERIMENTAL //uncomment/comment this line to turn on/off LIBIO_EXPERIMENTAL library features
+#define LIBIO_TEST //uncomment/comment this line to turn on/off library test
 
-#ifdef LIBIO_EXPERIMENTAL //define functions and include other libraries if LIBIO_EXPERIMENTAL tag is defined
+#ifdef LIBIO_EXPERIMENTAL ///define functions and include other libraries if LIBIO_EXPERIMENTAL tag is defined
 #include <filesystem>
 #include <cmath>
+#incldue <vector>
+#include <iterator>
+#include <sstream>
 #endif
 
 export module Libio;
 
 /**
- * Unified namespace for libio.
+ * Unified namespace for libio library for input/output.
  */
-export namespace libio {
-    using cint [[maybe_unused]] = const int; //constant custom integer type
+namespace libio {
+    using cint [[maybe_unused]] = const int; ///constant custom integer type
+    using cbool [[maybe_unused]] = const bool; ///constant custom bool type
 
     /**
      * Namespace for constrains of types using concepts
      */
-    namespace type_constrains {
+    export namespace type_constrains {
         template<typename T>
         concept is_string = std::is_same_v<T, std::string>;
 
-#ifdef LIBIO_EXPERIMENTAL
+        /**
+         * Check for standard library container
+         */
         template<typename T>
-        concept is_digit = std::is_same_v<T, int>;
-#endif
+        concept is_stl_container = requires(T t)
+        {
+            // Type must have an iterator type
+            typename T::iterator;
+
+            // Must have a begin() method returning an iterator
+            { t.begin() } -> std::same_as<typename T::iterator>;
+
+            // Must have an end() method returning an iterator
+            { t.end() } -> std::same_as<typename T::iterator>;
+        };
     }
 
     /**
@@ -47,12 +60,36 @@ export namespace libio {
      */
     namespace output {
         /**
+         * Namespace for colored text output
+         */
+        namespace colored {
+            /**
+            Enumerate class for compiler output colors
+            */
+            export enum Color {
+                WHITE,
+                RED,
+                BLUE,
+                GREEN
+            };
+
+            struct Ansi_colors {
+                //
+            };
+
+            export template<typename T>
+            void colored_print(const T &str, const std::string &separator = " ", Color color = WHITE) {
+                //
+            }
+        }
+
+        /**
          * Print given generic message in console with new line. By default, equal to "".
          * @warning If using C++23 - use std::println.
          * @param str string to output
          * @tparam T generic parameter of type to console print
          */
-        template<typename T = std::string>
+        export template<typename T = std::string>
         void println(const T &str = "\n") {
             if (std::cout.good()) {
                 std::cout << str << std::endl;
@@ -66,8 +103,8 @@ export namespace libio {
          * @param str string to output
          * @param separator text separator
          */
-        template<typename T>
-        void print(const T &str = "", std::string separator = "") {
+        export template<typename T>
+        void print(const T &str, std::string separator = "") {
             if (std::cout.good()) {
                 std::cout << str << separator;
             }
@@ -81,7 +118,7 @@ export namespace libio {
          * @param separator separator value between elements
          * @param is_inline I do not know why I do this.
          */
-        template<typename T>
+        export template<typename T>
         void lineArrayOutput(const T *array, const int array_size, const std::string &separator = " ",
                              const bool is_inline = false) {
             for (int i = 0; i < array_size - 1; ++i) {
@@ -101,8 +138,8 @@ export namespace libio {
          * @param separator separator string
          * @param endsymbol symbol at the end of output sequence
          */
-        template<typename T>
-        requires std::copyable<T>
+        export template<typename T>
+            requires std::copyable<T>
         void lineArrayOutput(T array, const std::string &separator = " ", const std::string &endsymbol = "") {
             const size_t array_size = array.size();
             int i = 0;
@@ -120,9 +157,8 @@ export namespace libio {
          * @param reverse order of array output, seq or reverse.
          * @param separator separator value between elements
          */
-        template<typename T>
-        void dynamicArrayOutput(const T *array, const int size, const bool reverse = false,
-                                const std::string &separator = " ") {
+        export template<typename T>
+        void dynamicArrayOutput(const T *array, const int size, const bool reverse = false, const std::string &separator = " ") {
             if (reverse) {
                 for (int i = size - 1; i >= 0; --i) {
                     std::cout << array[i] << separator;
@@ -141,8 +177,8 @@ export namespace libio {
          * @param container container object to print out
          * @param separator separator value between values
          */
-        template<typename T>
-        requires std::copyable<T>
+        export template<typename T>
+            requires std::copyable<T>
         void print_container(const T &container, const std::string &separator = " ") {
             const size_t container_size = container.size();
             int i = 0;
@@ -158,18 +194,6 @@ export namespace libio {
         }
 
 #ifdef LIBIO_EXPERIMENTAL
-        template<>
-        void print_container<std::map>(const auto &container, const std::string &separator = " ") {
-            for (const auto& section : container) {
-                std::cout << "[" << section.first << "]" << std::endl;
-                for (const auto& kv : section.second) {
-                    std::cout << "  " << kv.first << "=" << kv.second << std::endl;
-                }
-
-                std::cout << std::endl;
-            }
-        }
-
         /**
         * Print pyramid object one line by line
         * @param array
@@ -212,19 +236,18 @@ export namespace libio {
     /**
      * Namespace for string actions in libio
      */
-    namespace string {
+    export namespace string {
         /**
-         * Split string with char separator, in case of not supported strings in regex
+         * Split string without separator
          * @param input input string to split
-         * @param delim delimeter character
          * @return vector object with strings
          */
-        std::vector<std::string> split(std::string const &input, char delim) {
-            std::vector<std::string> result;
+        std::vector<std::string> split(std::string const &input) {
             std::stringstream ss(input);
-            std::string token;
-            while (std::getline(ss, token, delim)) {
-                result.push_back(token);
+            std::vector<std::string> result;
+            std::string word;
+            while (ss >> word) {
+                result.push_back(word);
             }
             return result;
         }
@@ -278,56 +301,32 @@ export namespace libio {
         }
 
         /**
-         * Check for intapibility of input string object
-         * @param input source string
-         * @return bool value
+         * Change string register by invoking std functions
+         * @param str source string value.
+         * @param regis output string register, can be either 1 (upper) or 2 (lower).
+         * @return string in selected register.
          */
-        bool is_digit(const std::string &input) {
-            std::regex e("^-?\\d+");
-            if (std::regex_match(input, e)) {
-                return true;
+        constexpr std::string change_string_register(const constexpr std::string &str, const constexpr int regis) {
+            constexpr decltype(std::toupper || std::tolower) func;
+            if (regis == 1) {
+                func = std::toupper;
+            } else if (regis == 2) {
+                func = std::tolower;
             } else {
-                return false;
+                throw std::invalid_argument("Invalid register, can be 1 or 2");
             }
-        }
-
-        /**
-         * Another unuseful function for string actions
-         * @param str source string to trim
-         * @return trimmed string
-         */
-        std::string trim(const std::string &str) {
-            size_t first = str.find_first_not_of(" \t\n\r\f\v");
-            if (first == std::string::npos) {
-                return "";
+            std::string result;
+            for (const auto ch: str) {
+                result += func(ch);
             }
-            size_t last = str.find_last_not_of(" \t\n\r\f\v");
-            return str.substr(first, last - first + 1);
+            return result;
         }
-
-        template<typename T>
-        T convert_to_t(const std::string &source);
-
-        template<>
-        int convert_to_t<int>(const std::string &source) {
-            try {
-                return std::stoi(source);
-            } catch (const std::exception &e) {
-                throw std::runtime_error("Cannot convert string to '" + source + "' in int");
-            }
-        }
-
-        template<>
-        std::string convert_to_t<std::string>(const std::string &source) {
-            return source.empty() ? "0" : source;
-        }
-
     }
 
     /**
      * Contains different input logic.
      */
-    namespace input {
+    export namespace input {
         /**
          * Writes down int value into variable by address
          * @param variableAddress address of variable to output data to it.
@@ -371,6 +370,20 @@ export namespace libio {
         }
 
         /**
+        * Different variant for userInput.
+        * @tparam T generic type for variable.
+        * @return variable of generic type.
+        */
+        template<typename T = std::string>
+        T userInput() {
+            T variable;
+            if (std::cin.good()) {
+                std::cin >> variable;
+            }
+            return variable;
+        }
+
+        /**
          * @param input_symbol symbol that appear in start of inputting
          * @return user string
          */
@@ -380,19 +393,12 @@ export namespace libio {
             std::getline(std::cin, line);
             return line;
         }
-
-#ifdef LIBIO_EXPERIMENTAL
-        template<typename T>
-        std::vector<T> vectorInput() {
-            //
-        }
-#endif
     }
 
     /**
      * Contains arrays actions
      */
-    namespace array {
+    export namespace array {
         /**
          * Delete dynamically allocated array
          * @tparam T generic type.
@@ -438,43 +444,68 @@ export namespace libio {
             return dyn_array;
         }
 
-#ifdef LIBIO_EXPERIMENTAL
         /**
-         * Inline function for creating Nd (arrays upper more than 2) generic array
-         * @param rows rows of the array
-         * @param cols columns of the array`
-         * @return: initialized Nd generic array
+         * @tparam T generic type
+         * @param depth
+         * @param sizes
+         * @return
          */
         template<typename T>
-        T **createNDArray(const int rows, const int cols) {
-            const auto dyn_array = new T *[rows];
-            for (int i = 0; i < rows; ++i) {
-                dyn_array[i] = new T *[cols];
+        std::vector<void *> createNDimArray(const size_t depth, const std::vector<size_t> &sizes) {
+            if (depth == sizes.size()) {
+                return {};
             }
-            return dyn_array;
+            std::vector<std::vector<void *> > result(sizes[depth]);
+            for (auto &sub: result) {
+                sub = createNDimArray<T>(depth + 1, sizes);
+            }
+            return static_cast<std::vector<T>>(result);
         }
 
-        std::tuple<int *, int, int> increase_dynamic_array(int *arr, int logical_size, int actual_size) {
-            if (arr != nullptr) {
-                actual_size *= 2;
-                auto new_arr = new int[actual_size];
-                for (int i = 0; i < logical_size; ++i) {
-                    new_arr[i] = arr[i];
-                }
-                delete[] arr;
-                return {new_arr, logical_size, actual_size};
+        /**
+         *
+         * @tparam T generic type
+         * @param sizes
+         * @return
+         */
+        template<typename T>
+        std::vector<T> createNDimArray(const std::vector<size_t> &sizes) {
+            if (sizes.empty())
+                return std::vector<T>();
+
+            std::vector<T> flat;
+            if (sizes.size() == 1) {
+                return std::vector<T>(sizes[0]);
             }
-            std::cerr << "Ошибка! Невозможно выделить дополнительную память для массива" << "\n";
-            throw;
+            if (sizes.size() == 2) {
+                std::vector<std::vector<T> > result(sizes[0], std::vector<T>(sizes[1]));
+                return result;
+            }
+            return;
         }
+
+#ifdef LIBIO_EXPERIMENTAL
+
+            std::tuple<int *, int, int> increase_dynamic_array(int *arr, int logical_size, int actual_size) {
+                if (arr != nullptr) {
+                    actual_size *= 2;
+                    auto new_arr = new int[actual_size];
+                    for (int i = 0; i < logical_size; ++i) {
+                        new_arr[i] = arr[i];
+                    }
+                    delete[] arr;
+                    return {new_arr, logical_size, actual_size};
+                }
+                std::cerr << "Ошибка! Невозможно выделить дополнительную память для массива" << "\n";
+                throw;
+            }
 #endif
     }
-
     /**
      * Contains file actions.
      * Ex. write or create.
      */
-    namespace file {
+    export namespace file {
         /**
          * Creates file for read and write.
          * @param fileName name of the file, create if not exists.
@@ -486,9 +517,8 @@ export namespace libio {
         }
 
         /**
-         * Read file line by line and return lines of file.
+         * Read file line by line.
          * @param fileName name of the file.
-         * @throw throw exception when error in reading file.
          * @return vector with lines.
          */
         inline std::vector<std::string> readFile(const std::string &fileName) {
@@ -513,46 +543,70 @@ export namespace libio {
          */
         inline std::ofstream writeFile(const std::string &fileName, const std::vector<std::string> &lines) {
             auto out = std::ofstream(fileName);
-            for (const auto &line: lines) {
+            std::for_each(lines.begin(), lines.end(), [&out](const std::string &line) {
                 out << line << std::endl;
-            }
+            });
             return out;
         }
 
 #ifdef LIBIO_EXPERIMENTAL
-        /**
-         * Function for receiving few lines from file.
-         * @tparam T generic type.
-         * @param fileName name of the file.
-         * @param count how many lines to get.
-         * @return vector with string values.
-         */
-        template<typename T>
-        std::vector<T> getFewLinesFrom(const std::string &fileName, const int count) {
-            std::ifstream file(fileName);
-            auto lines = std::vector<T>();
-            int inner_counter = 0;
-            std::string line;
-            while (std::getline(file, line)) {
-                ++inner_counter;
-                if (inner_counter == count) {
-                    break;
+            /**
+             * Function for receiving few lines from file.
+             * @tparam T generic type.
+             * @param fileName name of the file.
+             * @param count how many lines to get.
+             * @return vector with string values.
+             */
+            template<typename T>
+            std::vector<T> getFewLinesFrom(const std::string &fileName, const int count) {
+                std::ifstream file(fileName);
+                auto lines = std::vector<T>();
+                int inner_counter = 0;
+                std::string line;
+                while (std::getline(file, line)) {
+                    ++inner_counter;
+                    if (inner_counter == count) {
+                        break;
+                    }
+                    lines.emplace_back(line);
                 }
-                lines.emplace_back(line);
+                return lines;
             }
-            return lines;
-        }
-#endif
 
-#ifdef LIBIO_EXPERIMENTAL
-        /**
-         * Platform independent filepath getter.
-         * @deprecated because crashes program due to strange path get.
-         * @return string value of current path
-         */
-        inline std::string getCwd() {
+            /**
+             * Platform independent filepath getter.
+             * @deprecated because crashes program due to strange path get.
+             * @return string value of current path
+             */
+            inline std::string getCwd() {
                 const std::filesystem::path currentPath = std::filesystem::current_path();
                 return currentPath.string();
+            }
+
+#endif
+    }
+
+    /**
+     * Namespace for concurrency things
+     */
+    namespace concurrency {
+        //
+    }
+
+    /**
+     * Namespace for database tricks
+     */
+    namespace database {
+        enum DATABASE_TYPE {
+            //
+        };
+#ifdef LIBIO_EXPERIMENTAL
+        void create_connection(const std::string& database_name) {
+            //
+        }
+
+        void close_connection(const std::string& database_name) {
+            //
         }
 #endif
     }
