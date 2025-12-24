@@ -2,7 +2,7 @@ module;
 
 /**
  Custom library for actions in Netology C++ course and later for more serious projects.
- Version - 1.18.0
+ Version - 1.22.0
  This library could be a module, but yes, later rewritten to module with LIBIO_EXPERIMENTAL functions.
  Some kind of Boost library for poor people.
 */
@@ -10,9 +10,12 @@ module;
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <cstring>
 
 // #define LIBIO_EXPERIMENTAL //uncomment/comment this line to turn on/off LIBIO_EXPERIMENTAL library features
-#define LIBIO_TEST //uncomment/comment this line to turn on/off library test
+// #define LIBIO_TEST //uncomment/comment this line to turn on/off library test
+// #define UNSTABLE //turns on unstable versions of very popular functions
+#define LIBIO_TRANSLATION
 
 #ifdef LIBIO_EXPERIMENTAL ///define functions and include other libraries if LIBIO_EXPERIMENTAL tag is defined
 #include <filesystem>
@@ -30,6 +33,7 @@ export module Libio;
 namespace libio {
     using cint [[maybe_unused]] = const int; ///constant custom integer type
     using cbool [[maybe_unused]] = const bool; ///constant custom bool type
+    using String [[maybe_unused]] = const std::string;
 
     /**
      * Namespace for constrains of types using concepts
@@ -62,26 +66,68 @@ namespace libio {
         /**
          * Namespace for colored text output
          */
-        namespace colored {
-            /**
-            Enumerate class for compiler output colors
-            */
-            export enum Color {
-                WHITE,
-                RED,
-                BLUE,
-                GREEN
-            };
-
+        export namespace colored {
             struct Ansi_colors {
-                //
+                static const std::string _clear_color;
+                static const std::string _color_start;
+                static const std::string WHITE;
+                static const std::string RED;
+                static const std::string GREEN;
+                static const std::string YELLOW;
+                static const std::string MAGENTA;
+                static const std::string CYAN;
             };
 
-            export template<typename T>
-            void colored_print(const T &str, const std::string &separator = " ", Color color = WHITE) {
-                //
+            const std::string Ansi_colors::_color_start = "\033[";
+            const std::string Ansi_colors::_clear_color = "\033[0m";
+            const std::string Ansi_colors::WHITE = "\033[37m";
+            const std::string Ansi_colors::RED = "\033[31m";
+            const std::string Ansi_colors::GREEN = "\033[32m";
+            const std::string Ansi_colors::YELLOW = "\033[33m";
+            const std::string Ansi_colors::MAGENTA = "\033[35m";
+            const std::string Ansi_colors::CYAN = "\033[36m";
+
+            /**
+             * Print generic object in color to console.
+             * @tparam T generic type
+             * @param object generic type object to print.
+             * @param separator string separator
+             * @param color std::string object with ANSI color sequence
+             */
+            template<typename T>
+            void colored_print(const T &object, const std::string &separator = " ", const std::string &color = Ansi_colors::WHITE) {
+                if (std::cout.good()) {
+                    std::cout << color << object << separator;
+                }
             }
         }
+
+
+#ifdef UNSTABLE
+        /**
+         * Print given generic message in console with new line. By default, equal to "".
+         * @warning If using C++23 - use std::println.
+         * @param str string to output
+         * @tparam T generic parameter of type to console print
+         */
+        export template<typename T = std::string>
+        void println(const T &str = "\n") {
+            std::cout << str << std::endl;
+        }
+
+        /**
+         * Print given generic message in console without new line.
+         * @warning If using C++23 - use std::print.
+         * @tparam T generic type
+         * @param str string to output
+         * @param separator text separator
+         */
+        export template<typename T>
+        void print(const T &str, std::string separator = "") {
+            std::cout << str << separator;
+        }
+
+#elifndef UNSTABLE
 
         /**
          * Print given generic message in console with new line. By default, equal to "".
@@ -109,6 +155,46 @@ namespace libio {
                 std::cout << str << separator;
             }
         }
+
+#ifdef LIBIO_TRANSLATION
+        /**
+         * Convert usual string object to wide string.
+         * @param str source std::string object
+         * @return wide string object
+         */
+        export std::wstring toWstring(const std::string &str) {
+            std::vector<wchar_t> buf(str.size());
+            std::use_facet<std::ctype<wchar_t> >(std::locale()).widen(str.data(),
+                                                                      str.data() + str.size(),
+                                                                      buf.data());
+            return std::wstring(buf.data(), buf.size());
+        }
+#endif
+
+        /**
+         * Print given wide string message in console with new line.
+         * @warning If using C++23 - use std::println.
+         * @param str string to output
+         */
+        export void println_w(const std::wstring &str) {
+            if (std::wcout.good()) {
+                std::wcout << str << std::endl;
+            }
+        }
+
+        /**
+         * Print given wide string message in console without new line.
+         * @warning If using C++23 - use std::print.
+         * @param str string to output
+         * @param separator text separator
+         */
+        export void print_w(const std::wstring &str, const std::wstring &separator) {
+            if (std::wcout.good()) {
+                std::wcout << str << separator;
+            }
+        }
+
+#endif
 
         /**
          * Function for array output with separator.
@@ -276,51 +362,88 @@ namespace libio {
          * @param s source string.
          * @return string object without whitespaces.
          */
-        std::string delete_whitespaces(std::string &s) {
-            int i = 0, first = 0, last = 0;
-            const int n = static_cast<int>(s.size());
-            while (s[i]) {
-                if (s[i] != '.') {
-                    first = i;
-                    break;
-                }
-                ++i;
+        std::string delete_whitespaces(const std::string &s) {
+            const size_t first_char_pos = s.find_first_not_of(" \t\n\r\f\v");
+            std::string output_string = s; //copy source string
+            if (first_char_pos != std::string::npos) {
+                output_string.erase(0, first_char_pos);
             }
-
-            i = n - 1;
-            while (i != -1) {
-                if (s[i] != '.') {
-                    last = i;
-                    break;
-                }
-                --i;
-            }
-
-            s = s.substr(first, last - first + 1);
-            return s;
+            return output_string;
         }
 
         /**
          * Change string register by invoking std functions
          * @param str source string value.
-         * @param regis output string register, can be either 1 (upper) or 2 (lower).
+         * @param regis output string register, can be either false (upper) or true (lower).
+         * @param loc localization object
          * @return string in selected register.
          */
-        constexpr std::string change_string_register(const constexpr std::string &str, const constexpr int regis) {
-            constexpr decltype(std::toupper || std::tolower) func;
-            if (regis == 1) {
-                func = std::toupper;
-            } else if (regis == 2) {
-                func = std::tolower;
-            } else {
-                throw std::invalid_argument("Invalid register, can be 1 or 2");
-            }
+        std::string change_string_register(const std::string &str, const bool regis, const std::locale &loc = std::locale("en")) {
+            decltype(auto) func = (!regis) ? std::toupper<char> : std::tolower<char>;
             std::string result;
             for (const auto ch: str) {
-                result += func(ch);
+                result += func(ch, loc);
             }
             return result;
         }
+
+        /**
+         Function for replacing all strings occurrences in string
+         @param str source string
+         @param replace replace this in source
+         @param with replace with this string in source
+         @return string with replacements
+         */
+        [[maybe_unused]] inline std::string &replace_string_all(std::string &str, const std::string &replace, const std::string &with) {
+            if (!replace.empty()) {
+                std::size_t pos = 0;
+                while ((pos = str.find(replace, pos)) != std::string::npos) {
+                    str.replace(pos, replace.length(), with);
+                    pos += with.length();
+                }
+            }
+            return str;
+        }
+
+        /**
+         * Another unuseful function for string actions
+         * @param str source string to trim
+         * @return trimmed string
+         */
+        std::string trim(const std::string &str) {
+            const size_t first = str.find_first_not_of(" \t\n\r\f\v");
+            if (first == std::string::npos) {
+                return "";
+            }
+            const size_t last = str.find_last_not_of(" \t\n\r\f\v");
+            return str.substr(first, last - first + 1);
+        }
+
+        template<typename T>
+        T convert_to_t(const std::string &source);
+
+        template<>
+        int convert_to_t(const std::string &source) {
+            try {
+                return std::stoi(source);
+            } catch (const std::exception &e) {
+                throw std::runtime_error("Cannot convert string to '" + source + "' in int " + e.what());
+            }
+        }
+
+        template<>
+        std::string convert_to_t(const std::string &source) {
+            return source.empty() ? "0" : source;
+        }
+
+#ifdef LIBIO_EXPERIMENTAL
+        /**
+         *
+         */
+        inline std::string replace(const std::string &str, const std::string &replace, const std::string &with) {
+            //
+        }
+#endif
     }
 
     /**
@@ -413,17 +536,28 @@ namespace libio {
             delete[] array;
         }
 
+        template<typename T>
+        T *create1DArray(int);
+
+        template<>
+        int *create1DArray(const int rows) {
+            const auto dyn_array = new int[rows];
+            for (int i = 0; i < rows; ++i) {
+                dyn_array[i] = 0;
+            }
+            return dyn_array;
+        }
+
         /**
          * Create one dimensional array of generic type
-         * @tparam T type for values in array
          * @param rows rows count
          * @return constructed array of generic type
          */
-        template<typename T>
-        T *create1DArray(const int rows) {
-            const auto dyn_array = new T[rows];
+        template<>
+        std::string *create1DArray(const int rows) {
+            const auto dyn_array = new std::string[rows];
             for (int i = 0; i < rows; ++i) {
-                dyn_array[i] = 0;
+                dyn_array[i] = "";
             }
             return dyn_array;
         }
@@ -463,6 +597,18 @@ namespace libio {
         }
 
         /**
+         * Resolve old string (c-style) string and return its size.
+         * @param old_string c-style string
+         * @return int value of size
+         */
+        template<typename T>
+        int get_dynamic_array_size([[maybe_unused]] T *old_string) {
+            constexpr int count = sizeof(old_string) / sizeof(old_string[0]);
+            return count;
+        }
+
+#ifdef LIBIO_EXPERIMENTAL
+        /**
          *
          * @tparam T generic type
          * @param sizes
@@ -484,21 +630,19 @@ namespace libio {
             return;
         }
 
-#ifdef LIBIO_EXPERIMENTAL
-
-            std::tuple<int *, int, int> increase_dynamic_array(int *arr, int logical_size, int actual_size) {
-                if (arr != nullptr) {
-                    actual_size *= 2;
-                    auto new_arr = new int[actual_size];
-                    for (int i = 0; i < logical_size; ++i) {
-                        new_arr[i] = arr[i];
-                    }
-                    delete[] arr;
-                    return {new_arr, logical_size, actual_size};
+        std::tuple<int *, int, int> increase_dynamic_array(int *arr, int logical_size, int actual_size) {
+            if (arr != nullptr) {
+                actual_size *= 2;
+                auto new_arr = new int[actual_size];
+                for (int i = 0; i < logical_size; ++i) {
+                    new_arr[i] = arr[i];
                 }
-                std::cerr << "Ошибка! Невозможно выделить дополнительную память для массива" << "\n";
-                throw;
+                delete[] arr;
+                return {new_arr, logical_size, actual_size};
             }
+            std::cerr << "Ошибка! Невозможно выделить дополнительную память для массива" << "\n";
+            throw;
+        }
 #endif
     }
     /**
