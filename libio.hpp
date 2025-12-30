@@ -2,7 +2,7 @@ module;
 
 /**
  Custom library for actions in Netology C++ course and later for more serious projects.
- Version - 1.22.0
+ Version - 1.23.0
  This library could be a module, but yes, later rewritten to module with LIBIO_EXPERIMENTAL functions.
  Some kind of Boost library for poor people.
 */
@@ -15,9 +15,12 @@ module;
 // #define LIBIO_EXPERIMENTAL //uncomment/comment this line to turn on/off LIBIO_EXPERIMENTAL library features
 // #define LIBIO_TEST //uncomment/comment this line to turn on/off library test
 // #define UNSTABLE //turns on unstable versions of very popular functions
-#define LIBIO_TRANSLATION
+//#define LIBIO_WIDE_STRING //functionality to use wide strings
+// #define LIBIO_DEPRECATED //deprecated features in libio
 
 #ifdef LIBIO_EXPERIMENTAL ///define functions and include other libraries if LIBIO_EXPERIMENTAL tag is defined
+#pragma message("Using experimental features")
+
 #include <filesystem>
 #include <cmath>
 #incldue <vector>
@@ -40,7 +43,7 @@ namespace libio {
      */
     export namespace type_constrains {
         template<typename T>
-        concept is_string = std::is_same_v<T, std::string>;
+        concept is_string_v = std::is_same_v<T, std::string>;
 
         /**
          * Check for standard library container
@@ -57,6 +60,12 @@ namespace libio {
             // Must have an end() method returning an iterator
             { t.end() } -> std::same_as<typename T::iterator>;
         };
+
+        template<typename T>
+        concept is_number_v = std::is_integral_v<T> || std::is_floating_point_v<T>;
+
+        template<typename T>
+        concept is_bool_v = std::convertible_to<T, bool> && std::same_as<T, bool>;
     }
 
     /**
@@ -97,13 +106,13 @@ namespace libio {
             template<typename T>
             void colored_print(const T &object, const std::string &separator = " ", const std::string &color = Ansi_colors::WHITE) {
                 if (std::cout.good()) {
-                    std::cout << color << object << separator;
+                    std::cout << color << object << Ansi_colors::_clear_color << separator;
                 }
             }
         }
 
-
 #ifdef UNSTABLE
+#warning "Using unstable functions in libio, be careful"
         /**
          * Print given generic message in console with new line. By default, equal to "".
          * @warning If using C++23 - use std::println.
@@ -156,20 +165,23 @@ namespace libio {
             }
         }
 
-#ifdef LIBIO_TRANSLATION
+#endif
+
+#ifdef LIBIO_WIDE_STRING
+#pragma message("Using libio wide string functionality")
+
         /**
          * Convert usual string object to wide string.
          * @param str source std::string object
          * @return wide string object
          */
-        export std::wstring toWstring(const std::string &str) {
+        export std::wstring to_wstring(const std::string &str) {
             std::vector<wchar_t> buf(str.size());
             std::use_facet<std::ctype<wchar_t> >(std::locale()).widen(str.data(),
                                                                       str.data() + str.size(),
                                                                       buf.data());
             return std::wstring(buf.data(), buf.size());
         }
-#endif
 
         /**
          * Print given wide string message in console with new line.
@@ -193,7 +205,6 @@ namespace libio {
                 std::wcout << str << separator;
             }
         }
-
 #endif
 
         /**
@@ -205,8 +216,8 @@ namespace libio {
          * @param is_inline I do not know why I do this.
          */
         export template<typename T>
-        void lineArrayOutput(const T *array, const int array_size, const std::string &separator = " ",
-                             const bool is_inline = false) {
+        void line_array_output(const T *array, const int array_size, const std::string &separator = " ",
+                               const bool is_inline = false) {
             for (int i = 0; i < array_size - 1; ++i) {
                 std::cout << array[i] << separator;
             }
@@ -226,7 +237,7 @@ namespace libio {
          */
         export template<typename T>
             requires std::copyable<T>
-        void lineArrayOutput(T array, const std::string &separator = " ", const std::string &endsymbol = "") {
+        void line_array_output(T array, const std::string &separator = " ", const std::string &endsymbol = "") {
             const size_t array_size = array.size();
             int i = 0;
             for (; i < array_size - 1; ++i) {
@@ -244,7 +255,7 @@ namespace libio {
          * @param separator separator value between elements
          */
         export template<typename T>
-        void dynamicArrayOutput(const T *array, const int size, const bool reverse = false, const std::string &separator = " ") {
+        void dynamic_array_output(const T *array, const int size, const bool reverse = false, const std::string &separator = " ") {
             if (reverse) {
                 for (int i = size - 1; i >= 0; --i) {
                     std::cout << array[i] << separator;
@@ -436,9 +447,20 @@ namespace libio {
             return source.empty() ? "0" : source;
         }
 
+        template<>
+        bool convert_to_t(const std::string &source) {
+            if (source == "false" || source == "False") {
+                return false;
+            }
+            if (source == "true" || source == "True") {
+                return true;
+            }
+            return false;
+        }
+
 #ifdef LIBIO_EXPERIMENTAL
         /**
-         *
+         * Replace string with another string
          */
         inline std::string replace(const std::string &str, const std::string &replace, const std::string &with) {
             //
@@ -450,11 +472,13 @@ namespace libio {
      * Contains different input logic.
      */
     export namespace input {
+#ifdef LIBIO_DEPRECATED
+#warning "Using deprecated libio features"
         /**
          * Writes down int value into variable by address
          * @param variableAddress address of variable to output data to it.
          */
-        inline void intUserInput(int &variableAddress) {
+        inline void int_user_input(int &variableAddress) {
             if (std::cin.good()) {
                 std::cin >> variableAddress;
             }
@@ -464,7 +488,7 @@ namespace libio {
          * Writes down long value into variable by address
          * @param variableAddress address of variable to output data to it.
          */
-        inline void longUserInput(long &variableAddress) {
+        inline void long_user_input(long &variableAddress) {
             if (std::cin.good()) {
                 std::cin >> variableAddress;
             }
@@ -474,19 +498,19 @@ namespace libio {
          * Writes down string into variable by address
          * @param variableAddress address of variable to output data to it.
          */
-        inline void stringUserInput(std::string &variableAddress) {
+        inline void string_user_input(std::string &variableAddress) {
             if (std::cin.good()) {
                 std::cin >> variableAddress;
             }
         }
-
+#endif
         /**
          * Writes down value into variable by address.
          * @tparam T generic type.
          * @param variableAddress address of variable to output data to it.
          */
         template<typename T>
-        void userInput(T &variableAddress) {
+        void user_input(T &variableAddress) {
             if (std::cin.good()) {
                 std::cin >> variableAddress;
             }
@@ -498,7 +522,7 @@ namespace libio {
         * @return variable of generic type.
         */
         template<typename T = std::string>
-        T userInput() {
+        T user_input() {
             T variable;
             if (std::cin.good()) {
                 std::cin >> variable;
@@ -510,7 +534,7 @@ namespace libio {
          * @param input_symbol symbol that appear in start of inputting
          * @return user string
          */
-        std::string lineInput(const std::string &input_symbol) {
+        std::string line_input(const std::string &input_symbol) {
             std::string line;
             std::cout << input_symbol;
             std::getline(std::cin, line);
@@ -529,7 +553,7 @@ namespace libio {
          * @param rows rows count in this array.
          */
         template<typename T>
-        void deleteDynamicArray(T *array, const int rows) {
+        void delete_dynamic_array(T *array, const int rows) {
             for (int i = 0; i < rows; ++i) {
                 delete[] array[i];
             }
@@ -537,10 +561,10 @@ namespace libio {
         }
 
         template<typename T>
-        T *create1DArray(int);
+        T *create_1d_array(int);
 
         template<>
-        int *create1DArray(const int rows) {
+        int *create_1d_array(const int rows) {
             const auto dyn_array = new int[rows];
             for (int i = 0; i < rows; ++i) {
                 dyn_array[i] = 0;
@@ -554,7 +578,7 @@ namespace libio {
          * @return constructed array of generic type
          */
         template<>
-        std::string *create1DArray(const int rows) {
+        std::string *create_1d_array(const int rows) {
             const auto dyn_array = new std::string[rows];
             for (int i = 0; i < rows; ++i) {
                 dyn_array[i] = "";
@@ -570,7 +594,7 @@ namespace libio {
          * @return: initialized 2d generic array
          */
         template<typename T>
-        T **create2DArray(const int rows, const int cols) {
+        T **create_2d_array(const int rows, const int cols) {
             const auto dyn_array = new T *[rows];
             for (int i = 0; i < rows; ++i) {
                 dyn_array[i] = new T *[cols];
@@ -582,16 +606,16 @@ namespace libio {
          * @tparam T generic type
          * @param depth
          * @param sizes
-         * @return
+         * @return vector with elements
          */
         template<typename T>
-        std::vector<void *> createNDimArray(const size_t depth, const std::vector<size_t> &sizes) {
+        std::vector<T> create_ndim_array(const size_t depth, const std::vector<size_t> &sizes) {
             if (depth == sizes.size()) {
                 return {};
             }
             std::vector<std::vector<void *> > result(sizes[depth]);
             for (auto &sub: result) {
-                sub = createNDimArray<T>(depth + 1, sizes);
+                sub = create_ndim_array<T>(depth + 1, sizes);
             }
             return static_cast<std::vector<T>>(result);
         }
@@ -615,7 +639,7 @@ namespace libio {
          * @return
          */
         template<typename T>
-        std::vector<T> createNDimArray(const std::vector<size_t> &sizes) {
+        std::vector<T> create_ndim_array(const std::vector<size_t> &sizes) {
             if (sizes.empty())
                 return std::vector<T>();
 
@@ -655,7 +679,7 @@ namespace libio {
          * @param fileName name of the file, create if not exists.
          * @return file handler.
          */
-        inline std::ofstream createWriteFile(const std::string &fileName) {
+        inline std::ofstream create_write_file(const std::string &fileName) {
             std::ofstream file(fileName);
             return file;
         }
@@ -665,7 +689,7 @@ namespace libio {
          * @param fileName name of the file.
          * @return vector with lines.
          */
-        inline std::vector<std::string> readFile(const std::string &fileName) {
+        inline std::vector<std::string> read_file(const std::string &fileName) {
             auto lines = std::vector<std::string>();
             if (std::ifstream file(fileName); file.is_open()) {
                 std::string line;
@@ -685,13 +709,42 @@ namespace libio {
          * @param lines vector value of lines of text.
          * @return output file handler.
          */
-        inline std::ofstream writeFile(const std::string &fileName, const std::vector<std::string> &lines) {
+        inline std::ofstream write_file(const std::string &fileName, const std::vector<std::string> &lines) {
             auto out = std::ofstream(fileName);
             std::for_each(lines.begin(), lines.end(), [&out](const std::string &line) {
                 out << line << std::endl;
             });
             return out;
         }
+
+#ifdef LIBIO_EXPERIMENTAL
+        /**
+        * Open file and return condition variable of open
+        * @param file_name name of the file to open
+        * @return tuple with file handler and bool (true if file open)
+        */
+        std::tuple<std::ifstream, bool> open_file(const std::string &file_name) {
+            if (auto file = std::ifstream(file_name); file.is_open()) {
+                return std::make_tuple<std::ifstream, bool>(std::move(file), true);
+            } else {
+                return std::make_tuple<std::ifstream, bool>(std::move(nullptr), false);
+            }
+        }
+
+        /**
+        * Function for checking if file exists in filesystem.
+        * @param file_name name of the file to check.
+        */
+        bool check_file_existence(const std::string &file_name) {
+            auto [file, cond] = open_file(file_name);
+            if (cond) {
+                file.close();
+                return true;
+            }
+            file.close();
+            return false;
+        }
+#endif
 
 #ifdef LIBIO_EXPERIMENTAL
             /**
@@ -754,4 +807,24 @@ namespace libio {
         }
 #endif
     }
+
+#ifdef LIBIO_EXPERIMENTAL
+#pragma message("Using libio assembler functions")
+    /**
+     * Namespace for inline assembler code and other
+     */
+    namespace other {
+        extern "C" int func(int x);
+        asm(R"(
+        .globl func
+        .type func, @function
+        func:
+        .cfi_startproc
+        movl %edi, %eax /* x is in RDI, see x86-64 calling convention */
+        addl $1, %eax
+        ret
+        .cfi_endproc
+    )");
+    }
+#endif
 }
