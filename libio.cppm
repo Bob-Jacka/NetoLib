@@ -5,6 +5,14 @@ module;
  Version - 1.23.1
  This library could be a module, but yes, later rewritten to module with LIBIO_EXPERIMENTAL functions.
  Some kind of Boost library for poor people.
+
+ You can connect module file by writing:
+ target_sources(<Project name>
+        PUBLIC
+        FILE_SET all_my_modules TYPE CXX_MODULES FILES
+        libio.cppm
+)
+ In your cmake file
 */
 
 #include <fstream>
