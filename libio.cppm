@@ -2,7 +2,7 @@ module;
 
 /**
  Custom library for actions in Netology C++ course and later for more serious projects.
- Version - 1.24.8
+ Version - 1.24.9
  This library could be a module, but yes, later rewritten to module with LIBIO_EXPERIMENTAL functions.
  Some kind of Boost library for poor people.
 
@@ -642,6 +642,20 @@ namespace libio {
      * Contains arrays actions
      */
     export namespace array {
+
+        template<typename T>
+        void fast_copy(T* dest, const T* src, size_t count) {
+            if constexpr (std::is_trivially_copyable<T>::value) {
+                std::cout << "Using fast memcpy for trivial type." << std::endl;
+                memcpy(dest, src, count * sizeof(T));
+            } else {
+                std::cout << "Using slow element-by-element copy." << std::endl;
+                for (size_t i = 0; i < count; ++i) {
+                    dest[i] = src[i];
+                }
+            }
+        }
+
         /**
          * Delete dynamically allocated array
          * @tparam T generic type.
