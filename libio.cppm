@@ -451,6 +451,24 @@ namespace libio {
         }
 
         /**
+         * Split method for char delimeter
+         * @param str source string
+         * @param delimiter
+         * @return
+         */
+        std::vector<std::string> split(const std::string &str, const char delimiter) {
+            std::vector<std::string> result;
+            std::istringstream       stream(str);
+            std::string              token;
+
+            while (std::getline(stream, token, delimiter)) {
+                result.push_back(token);
+            }
+
+            return result;
+        }
+
+        /**
          * Delete whitespaces at begin and end of the given string.
          * @param s source string.
          * @return string object without whitespaces.
