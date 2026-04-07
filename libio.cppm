@@ -2,12 +2,12 @@ module;
 
 /**
  Custom library for actions in Netology C++ course and later for more serious projects.
- Version - 1.24.9
+ Version - 1.25.0
  This library could be a module, but yes, later rewritten to module with LIBIO_EXPERIMENTAL functions.
  Some kind of Boost library for poor people.
 
  You can connect module file by writing:
- 
+
  target_sources(<Project name>
         PUBLIC
         FILE_SET all_my_modules TYPE CXX_MODULES FILES
@@ -222,22 +222,8 @@ namespace libio {
 
 #endif
 
-#define LIBIO_WIDE_STRING
 #ifdef LIBIO_WIDE_STRING
 #pragma message("Using libio wide string functionality")
-
-        /**
-         * Convert usual string object to wide string.
-         * @param str source std::string object
-         * @return wide string object
-         */
-        export std::wstring to_wstring(const std::string &str) {
-            std::vector<wchar_t> buf(str.size());
-            std::use_facet<std::ctype<wchar_t> >(std::locale()).widen(str.data(),
-                                                                      str.data() + str.size(),
-                                                                      buf.data());
-            return std::wstring(buf.data(), buf.size());
-        }
 
         /**
          * Print given wide string message in console with new line.
@@ -524,42 +510,41 @@ namespace libio {
         * @param delim delimiter to split on
         * @return tuple if you want to assign to variable.
         */
-        std::vector<std::string> split_by_first_delim(const std::string &s, const char delim = ' ') {
+        std::tuple<std::string, std::string> split_by_first_delim(const std::string &s, const char delim = ' ') {
             if (const size_t pos = s.find(delim); pos != std::string::npos) {
                 const std::string first_part  = s.substr(0, pos);
                 const std::string second_part = s.substr(pos + 1);
                 return {first_part, second_part};
             }
             throw std::runtime_error("split_by_first_delim: delimiter not found");
-            }
+        }
 #ifdef LIBIO_ERROR
-            throw std::runtime_error("split_by_first_delim: delimiter not found");
-#endif
-        }
-
-        /**
-         * Another unuseful function for string actions
-         * @param str source string to trim
-         * @return trimmed string
-         */
-        std::string trim(const std::string &str) {
-            const size_t first = str.find_first_not_of(" \t\n\r\f\v");
-            if (first == std::string::npos) {
-                return "";
-            }
-            const size_t last = str.find_last_not_of(" \t\n\r\f\v");
-            return str.substr(first, last - first + 1);
-        }
-
-#ifdef LIBIO_EXPERIMENTAL
-        /**
-         * Replace string with another string
-         */
-        inline std::string replace(const std::string &str, const std::string &replace, const std::string &with) {
-            //
-        }
+        throw std::runtime_error ("split_by_first_delim: delimiter not found");
 #endif
     }
+
+    /**
+     * Another unuseful function for string actions
+     * @param str source string to trim
+     * @return trimmed string
+     */
+    std::string trim(const std::string &str) {
+        const size_t first = str.find_first_not_of(" \t\n\r\f\v");
+        if (first == std::string::npos) {
+            return "";
+        }
+        const size_t last = str.find_last_not_of(" \t\n\r\f\v");
+        return str.substr(first, last - first + 1);
+    }
+
+#ifdef LIBIO_EXPERIMENTAL
+    /**
+     * Replace string with another string
+     */
+    inline std::string replace(const std::string &str, const std::string &replace, const std::string &with) {
+        //
+    }
+#endif
 
     /**
      * Contains different input logic.
@@ -660,9 +645,8 @@ namespace libio {
      * Contains arrays actions
      */
     export namespace array {
-
         template<typename T>
-        void fast_copy(T* dest, const T* src, size_t count) {
+        void fast_copy(T *dest, const T *src, size_t count) {
             if constexpr (std::is_trivially_copyable<T>::value) {
                 std::cout << "Using fast memcpy for trivial type." << std::endl;
                 memcpy(dest, src, count * sizeof(T));
@@ -801,6 +785,7 @@ namespace libio {
         }
 #endif
     }
+
     /**
      * Contains file actions.
      * Ex. write or create.
@@ -970,20 +955,20 @@ namespace libio {
          * Methods of sql execution
          */
         struct Sql_methods {
-            static String SELECT;
-            static String DELETE;
-            static String UPDATE;
-            static String INSERT;
-            static String CREATE;
-            static String DROP;
+            static libio::String SELECT;
+            static libio::String DELETE;
+            static libio::String UPDATE;
+            static libio::String INSERT;
+            static libio::String CREATE;
+            static libio::String DROP;
         };
 
-        String Sql_methods::SELECT = "SELECT";
-        String Sql_methods::DELETE = "DELETE";
-        String Sql_methods::UPDATE = "UPDATE";
-        String Sql_methods::INSERT = "INSERT";
-        String Sql_methods::CREATE = "CREATE";
-        String Sql_methods::DROP   = "DROP";
+        libio::String Sql_methods::SELECT = "SELECT";
+        libio::String Sql_methods::DELETE = "DELETE";
+        libio::String Sql_methods::UPDATE = "UPDATE";
+        libio::String Sql_methods::INSERT = "INSERT";
+        libio::String Sql_methods::CREATE = "CREATE";
+        libio::String Sql_methods::DROP   = "DROP";
 
         enum DATABASE_TYPE {
             //
@@ -1107,7 +1092,7 @@ namespace libio {
                 if (result *sign
 
 
-                
+
                 >
                 std::numeric_limits<int>::max()
                 ) {
@@ -1122,5 +1107,18 @@ namespace libio {
         }
 
 #endif
+
+        /**
+        * Convert usual string object to wide string.
+        * @param str source std::string object
+        * @return wide string object
+        */
+        std::wstring to_wstring(const std::string &str) {
+            std::vector<wchar_t> buf(str.size());
+            std::use_facet<std::ctype<wchar_t> >(std::locale()).widen(str.data(),
+                                                                      str.data() + str.size(),
+                                                                      buf.data());
+            return std::wstring{buf.data(), buf.size()};
+        }
     }
 }
